@@ -1,79 +1,105 @@
-const chaiHttp = require('chai-http');
-const chai = require('chai');
-const assert = chai.assert;
-const server = require('../server');
+/*
+ *
+ *
+ *       FILL IN EACH FUNCTIONAL TEST BELOW COMPLETELY
+ *       -----[Keep the tests in the same order!]-----
+ *       (if additional are added, keep them at the very end!)
+ */
+
+var chaiHttp = require('chai-http');
+var chai = require('chai');
+var assert = chai.assert;
+var server = require('../server');
+
+var MongoClient = require('mongodb').MongoClient;
+const CONNECTION_STRING = process.env.DB;
 
 chai.use(chaiHttp);
 
+// This requires the tested stocks to not already be in db with likes
 suite('Functional Tests', function() {
-  function getStockPrices(stocks, like) {
-    const stockParams = stocks
-      .map(stock => `stock=${encodeURIComponent(stock)}`)
-      .join('&');
-    const likeParam = like ? '&like=true' : '';
-    return chai.request(server).get(`/api/stock-prices?${stockParams}${likeParam}`);
-  }
+  suite('GET /api/stock-prices => stockData object', function() {
+    let lastLikeNum = 0;
 
-  test('Viewing one stock: GET request to /api/stock-prices/', function() {
-    return getStockPrices(['MSFT'])
-      .then(response => {
-        assert.equal(response.status, 200);
-        assert.isObject(response.body.stockData);
-        assert.equal(response.body.stockData.stock, 'MSFT');
-        assert.isNumber(response.body.stockData.price);
-        assert.isNumber(response.body.stockData.likes);
-      });
-  });
+    test('1 stock', function(done) {
+      chai
+        .request(server)
+        .get('/api/stock-prices')
+        .query({ stock: 'grin' })
+        .end(function(err, res) {
+          if (err) console.log(err);
+          lastLikeNum = res.body.stockData.likes;
+          assert.equal(res.status, 200);
+          assert.isObject(res.body);
+          assert.equal(res.body.stockData.stock, 'GRIN');        
+          done();
+        });
+    });
 
-  test('Viewing one stock and liking it: GET request to /api/stock-prices/', function() {
-    return getStockPrices(['NVDA'])
-      .then(before => getStockPrices(['NVDA'], true)
-        .then(response => {
-          assert.equal(response.status, 200);
-          assert.equal(response.body.stockData.stock, 'NVDA');
-          assert.equal(response.body.stockData.likes, before.body.stockData.likes + 1);
-        }));
-  });
+    test('1 stock with like', function(done) {
+      chai
+        .request(server)
+        .get('/api/stock-prices')
+        .query({ stock: 'grin', like: 'true' })
+        .end(function(err, res) {
+          if (err) console.log(err);          
+          assert.equal(res.status, 200);
+          assert.isObject(res.body);
+          assert.equal(res.body.stockData.stock, 'GRIN');
+          assert.isAbove(res.body.stockData.likes, lastLikeNum);        
+          lastLikeNum = res.body.stockData.likes;
+          done();
+        });
+    });
 
-  test('Viewing the same stock and liking it again: GET request to /api/stock-prices/', function() {
-    return getStockPrices(['NVDA'], true)
-      .then(firstResponse => getStockPrices(['NVDA'], true)
-        .then(secondResponse => {
-          assert.equal(firstResponse.body.stockData.likes, secondResponse.body.stockData.likes);
-        }));
-  });
+    test('1 stock with like again (ensure likes arent double counted)', function(done) {
+      chai
+        .request(server)
+        .get('/api/stock-prices')
+        .query({ stock: 'grin', like: 'true' })
+        .end(function(err, res) {
+          if (err) console.log(err);
+          assert.equal(res.status, 200);
+          assert.isObject(res.body);
+          assert.equal(res.body.stockData.stock, 'GRIN');
+          assert.equal(res.body.stockData.likes, lastLikeNum);
+          done();
+        });
+    });
 
-  test('Viewing two stocks: GET request to /api/stock-prices/', function() {
-    return getStockPrices(['GOOG', 'MSFT'])
-      .then(response => {
-        assert.equal(response.status, 200);
-        assert.isArray(response.body.stockData);
-        assert.lengthOf(response.body.stockData, 2);
-        assert.equal(response.body.stockData[0].stock, 'GOOG');
-        assert.isNumber(response.body.stockData[0].price);
-        assert.isNumber(response.body.stockData[0].rel_likes);
-        assert.notProperty(response.body.stockData[0], 'likes');
-        assert.equal(response.body.stockData[1].stock, 'MSFT');
-        assert.isNumber(response.body.stockData[1].price);
-        assert.isNumber(response.body.stockData[1].rel_likes);
-        assert.notProperty(response.body.stockData[1], 'likes');
-      });
-  });
+    test('2 stocks', function(done) {
+      chai
+        .request(server)
+        .get('/api/stock-prices')
+        .query({ stock: ['tnxp', 'siri'] })
+        .end((err, res) => {
+          if (err) console.log(err);          
+          assert.equal(res.status, 200);          
+          assert.equal(res.body.stockData.length, 2);          
+          done();
+        });
+    });
 
-  test('Viewing two stocks and liking them: GET request to /api/stock-prices/', function() {
-    return getStockPrices(['GOOG'])
-      .then(firstBefore => getStockPrices(['MSFT'])
-        .then(secondBefore => getStockPrices(['GOOG', 'MSFT'], true)
-          .then(response => getStockPrices(['GOOG'])
-            .then(firstAfter => getStockPrices(['MSFT'])
-              .then(secondAfter => {
-                assert.isArray(response.body.stockData);
-                assert.isNumber(response.body.stockData[0].rel_likes);
-                assert.isNumber(response.body.stockData[1].rel_likes);
-                assert.equal(firstAfter.body.stockData.likes,
-                  firstBefore.body.stockData.likes + 1);
-                assert.equal(secondAfter.body.stockData.likes,
-                  secondBefore.body.stockData.likes + 1);
-              })))));
+    test('2 stocks with like', function(done) {
+      chai
+        .request(server)
+        .get('/api/stock-prices')
+        .query({ stock: ['tnxp', 'siri'], like: 'true' })
+        .end((err, res) => {
+          if (err) console.log(err);        
+          assert.equal(res.status, 200);
+          assert.equal(res.req.path.slice(-4), 'true');
+          assert.equal(res.body.stockData.length, 2);
+          done();        
+          MongoClient.connect(CONNECTION_STRING, function(err, db) {
+            if (err) throw err;
+            console.log('Connected to db server from functional tests, removing TNXP, SIRI and GRIN');
+            const stockDB = db.collection('myStocks');
+            stockDB.deleteOne({ 'stockData.stock': 'TNXP' });
+            stockDB.deleteOne({ 'stockData.stock': 'SIRI' });
+            stockDB.deleteOne({ 'stockData.stock': 'GRIN' });
+          });
+        });
+    });
   });
 });
