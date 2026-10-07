@@ -14,7 +14,7 @@ suite('Functional Tests', function() {
     return chai.request(server).get(`/api/stock-prices?${stockParams}${likeParam}`);
   }
 
-  test('Viewing one stock', function() {
+  test('Viewing one stock: GET request to /api/stock-prices/', function() {
     return getStockPrices(['MSFT'])
       .then(response => {
         assert.equal(response.status, 200);
@@ -25,7 +25,7 @@ suite('Functional Tests', function() {
       });
   });
 
-  test('Viewing one stock and liking it', function() {
+  test('Viewing one stock and liking it: GET request to /api/stock-prices/', function() {
     return getStockPrices(['NVDA'])
       .then(before => getStockPrices(['NVDA'], true)
         .then(response => {
@@ -35,7 +35,7 @@ suite('Functional Tests', function() {
         }));
   });
 
-  test('Viewing the same stock and liking it again', function() {
+  test('Viewing the same stock and liking it again: GET request to /api/stock-prices/', function() {
     return getStockPrices(['NVDA'], true)
       .then(firstResponse => getStockPrices(['NVDA'], true)
         .then(secondResponse => {
@@ -43,29 +43,37 @@ suite('Functional Tests', function() {
         }));
   });
 
-  test('Viewing two stocks', function() {
+  test('Viewing two stocks: GET request to /api/stock-prices/', function() {
     return getStockPrices(['GOOG', 'MSFT'])
       .then(response => {
         assert.equal(response.status, 200);
         assert.isArray(response.body.stockData);
         assert.lengthOf(response.body.stockData, 2);
-        response.body.stockData.forEach(stockData => {
-          assert.isString(stockData.stock);
-          assert.isNumber(stockData.price);
-          assert.isNumber(stockData.rel_likes);
-          assert.notProperty(stockData, 'likes');
-        });
+        assert.equal(response.body.stockData[0].stock, 'GOOG');
+        assert.isNumber(response.body.stockData[0].price);
+        assert.isNumber(response.body.stockData[0].rel_likes);
+        assert.notProperty(response.body.stockData[0], 'likes');
+        assert.equal(response.body.stockData[1].stock, 'MSFT');
+        assert.isNumber(response.body.stockData[1].price);
+        assert.isNumber(response.body.stockData[1].rel_likes);
+        assert.notProperty(response.body.stockData[1], 'likes');
       });
   });
 
-  test('Viewing two stocks and liking them', function() {
-    return getStockPrices(['GOOG', 'NVDA'], true)
-      .then(firstResponse => getStockPrices(['GOOG', 'NVDA'], true)
-        .then(secondResponse => {
-          assert.equal(firstResponse.body.stockData[0].rel_likes,
-            secondResponse.body.stockData[0].rel_likes);
-          assert.equal(firstResponse.body.stockData[1].rel_likes,
-            secondResponse.body.stockData[1].rel_likes);
-        }));
+  test('Viewing two stocks and liking them: GET request to /api/stock-prices/', function() {
+    return getStockPrices(['GOOG'])
+      .then(firstBefore => getStockPrices(['MSFT'])
+        .then(secondBefore => getStockPrices(['GOOG', 'MSFT'], true)
+          .then(response => getStockPrices(['GOOG'])
+            .then(firstAfter => getStockPrices(['MSFT'])
+              .then(secondAfter => {
+                assert.isArray(response.body.stockData);
+                assert.isNumber(response.body.stockData[0].rel_likes);
+                assert.isNumber(response.body.stockData[1].rel_likes);
+                assert.equal(firstAfter.body.stockData.likes,
+                  firstBefore.body.stockData.likes + 1);
+                assert.equal(secondAfter.body.stockData.likes,
+                  secondBefore.body.stockData.likes + 1);
+              })))));
   });
 });
