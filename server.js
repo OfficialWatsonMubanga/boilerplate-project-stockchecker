@@ -28,7 +28,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'"],
-      scriptSrc: ["'self'", "trusted-cdn.com"] 
+      scriptSrc: ["'self'"] 
     }
   },
   dnsPrefetchControl: false
