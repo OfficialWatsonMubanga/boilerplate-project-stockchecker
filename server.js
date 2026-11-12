@@ -13,26 +13,22 @@ const runner            = require('./test-runner');
 
 const app = express();
 
+app.use(helmet.frameguard({ action: 'deny' }));
+app.use(helmet.dnsPrefetchControl({ allow: false }));
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'"],
+    styleSrc: ["'self'"]
+  }
+}));
+
 app.use('/public', express.static(process.cwd() + '/public'));
 
 app.use(cors({origin: '*'})); //For FCC testing purposes only
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
-app.use(helmet({
-  frameguard: {
-    action: 'deny'
-  },
-  contentSecurityPolicy: { 
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'"],
-      scriptSrc: ["'self'"] 
-    }
-  },
-  dnsPrefetchControl: false
-}));
 
 app.enable('trust proxy')
 
