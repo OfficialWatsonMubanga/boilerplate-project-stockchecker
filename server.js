@@ -32,6 +32,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.enable('trust proxy')
 
+app.use((req, res, next) => {
+  if (req.path === '/_api/app-info' && !res._headers) {
+    Object.defineProperty(res, '_headers', {
+      configurable: true,
+      get: () => res.getHeaders()
+    });
+  }
+  next();
+});
+
 //Index page (static HTML)
 app.route('/')
   .get(function (req, res) {
