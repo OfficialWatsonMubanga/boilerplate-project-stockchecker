@@ -33,7 +33,7 @@ function objParser(str, init) {
   var type;
   for(var i = (init || 0); i < str.length; i++ ) {
     type = openSym.indexOf(str[i]);
-    if( type !== -1)  break;
+      if (type !== -1) break;
   }
   if (type === -1) return null;
   var open = openSym[type];

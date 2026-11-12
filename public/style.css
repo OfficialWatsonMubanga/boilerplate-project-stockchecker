@@ -1,54 +1,28 @@
-h1,
-h2,
-h3 {
-  font-family: Georgia;
+#userstories {
+  margin-left: 5%;
+  margin-top: 5%;
 }
 
-body {
-  margin: 25px;
-  background-color: #efefef;
+.p-50 {
+  margin: 50px;
 }
 
-ul {
-  list-style: none;
-  font-family: Tahoma;
-  font-size: 18px;
+#testui {
+  margin-left: 5%;
 }
 
-ul li:before {
-  content: "✓";
-  font-weight: bold;
-  color: #1dcd4f;
+.text-align-left {
+  text-align: left;
 }
 
-li {
-  margin: 5px 0;
+input[type='text'] {
+  width: 100px;
 }
 
-code {
-  font-family: Verdana;
+.m-50 {
+  margin: 50px;
 }
 
-button {
-  font-size: 16px;
-  padding: 5px;
-  margin-top: 10px;
-}
-
-input[type="checkbox"] {
-  transform: scale(1.5);
-}
-
-input[type="text"] {
-  font-size: 18px;
-  padding: 5px;
-}
-
-form#testForm2,
-#testForm {
-  font-size: 18px;
-}
-
-#testForm > button {
-  margin-bottom: 20px;
+.mt-200 {
+  margin-top: 200px;
 }
