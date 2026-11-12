@@ -1,4 +1,3 @@
-let mongodb = require('mongodb')
 let mongoose = require('mongoose')
 let {Schema} = mongoose
 
